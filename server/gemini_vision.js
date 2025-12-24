@@ -8,7 +8,12 @@ async function recognizeWithGemini(imageBuffer, mimeType = 'image/png') {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
-  const prompt = 'Transcribe the handwritten text on this 3x5 notecard exactly. Only output the transcribed text.';
+  const prompt = `Transcribe the handwritten text on this 3x5 notecard for a Markdown file. 
+Join lines that were broken only because of the physical edge of the card. 
+The output should consist of continuous paragraphs.
+Use a double newline only when there is a clear, intentional paragraph break or a list in the handwriting.
+Do not use single newlines for line wraps.
+Only output the transcribed text.`;
   const imagePart = {
     inlineData: {
       data: imageBuffer.toString('base64'),
