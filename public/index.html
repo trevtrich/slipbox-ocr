@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slipbox OCR (Boston Edition)</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+    <main class="container">
+        <header class="header">
+            <h1>Slipbox OCR</h1>
+            <p>Advanced Handwriting Recognition via Gemini 3 Flash.</p>
+        </header>
+
+        <section class="grid">
+            <div class="panel">
+                <h2>Camera</h2>
+                <div class="videoWrap">
+                    <video id="video" autoplay playsinline></video>
+                    <div class="guide" aria-hidden="true"></div>
+                    <canvas id="canvas" class="hidden"></canvas>
+                </div>
+                <div class="row">
+                    <button id="startBtn" class="primary-btn">Start camera</button>
+                    <button id="captureBtn" class="primary-btn" disabled>Capture</button>
+                    <button id="stopBtn" disabled>Stop</button>
+                </div>
+                <div class="row">
+                    <label class="label">
+                        Engine
+                        <select id="engine">
+                            <option value="gemini" selected>Gemini 3 Flash (Handwriting)</option>
+                        </select>
+                    </label>
+                    <label class="label">
+                        JPEG quality
+                        <input id="quality" type="range" min="40" max="95" value="85" />
+                    </label>
+                </div>
+                <p id="status" class="status">Idle</p>
+                <img id="preview" class="preview hidden" alt="Capture preview" />
+            </div>
+
+            <div class="panel">
+                <h2>Result</h2>
+                <label class="label">
+                    Title
+                    <input id="title" type="text" placeholder="Optional (defaults to first line)" />
+                </label>
+                <label class="label">
+                    Text (edit before exporting)
+                    <textarea id="text" rows="12" placeholder="OCR output appears here..."></textarea>
+                </label>
+                <div class="row">
+                    <button id="ocrBtn" class="primary-btn" disabled>Run OCR</button>
+                    <button id="copyBtn" disabled>Copy text</button>
+                </div>
+                <div class="row">
+                    <button id="downloadBtn" disabled>Download .md</button>
+                    <button id="saveBtn" disabled>Save to output/</button>
+                </div>
+                <details class="details">
+                    <summary>Markdown preview</summary>
+                    <pre id="mdPreview" class="md"></pre>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <script src="/script.js"></script>
+</body>
+
+</html>
