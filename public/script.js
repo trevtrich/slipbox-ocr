@@ -1,7 +1,10 @@
+import { pipeline, RawImage } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const preview = document.getElementById("preview");
 const statusEl = document.getElementById("status");
+const capturesList = document.getElementById("capturesList");
 
 const startBtn = document.getElementById("startBtn");
 const captureBtn = document.getElementById("captureBtn");
@@ -10,6 +13,7 @@ const ocrBtn = document.getElementById("ocrBtn");
 const copyBtn = document.getElementById("copyBtn");
 const downloadBtn = document.getElementById("downloadBtn");
 const saveBtn = document.getElementById("saveBtn");
+const autoScanToggle = document.getElementById("autoScanToggle");
 
 const titleEl = document.getElementById("title");
 const textEl = document.getElementById("text");
@@ -19,6 +23,10 @@ const engineEl = document.getElementById("engine");
 
 let stream;
 let lastCaptureBlob;
+let detector;
+let isScanning = false;
+let lastAutoCaptureTime = 0;
+const AUTO_CAPTURE_COOLDOWN = 3000; // 3 seconds
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -46,6 +54,22 @@ function enableExportButtons() {
   buildMarkdown();
 }
 
+async function initDetector() {
+  if (detector) return;
+  try {
+    setStatus("Loading model: downloading tiny detector (~25MB)...");
+    detector = await pipeline('object-detection', 'Xenova/yolos-tiny');
+    setStatus("Detector ready. Position a card in the guide.");
+    console.log("Detector model loaded successfully.");
+  } catch (e) {
+    setStatus("Model Error: " + e.message);
+    console.error("Detector load error:", e);
+    autoScanToggle.checked = false;
+    isScanning = false;
+    video.parentElement.classList.remove('scanning');
+  }
+}
+
 async function startCamera() {
   stream = await navigator.mediaDevices.getUserMedia({
     video: {
@@ -64,6 +88,7 @@ function stopCamera() {
   for (const track of stream.getTracks()) track.stop();
   stream = undefined;
   video.srcObject = null;
+  isScanning = false;
 }
 
 async function captureFrame() {
@@ -95,8 +120,112 @@ async function captureFrame() {
   if (!blob) throw new Error("Failed to capture image");
 
   lastCaptureBlob = blob;
-  preview.src = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  preview.src = url;
   preview.classList.remove("hidden");
+  return { blob, url };
+}
+
+async function processAutoCapture(blob, url) {
+  const itemEl = document.createElement('div');
+  itemEl.className = 'capture-item';
+  const timestamp = new Date().toLocaleTimeString();
+
+  itemEl.innerHTML = `
+        <img src="${url}">
+        <div class="info">
+            <h4>Capture ${timestamp}</h4>
+            <p>Processing...</p>
+        </div>
+        <div class="status-badge">OCR</div>
+    `;
+  capturesList.prepend(itemEl);
+
+  try {
+    const form = new FormData();
+    form.append("image", blob, "capture.jpg");
+    const query = new URLSearchParams({ engine: 'gemini', preprocess: "1" });
+    const res = await fetch(`/api/ocr?${query.toString()}`, {
+      method: "POST",
+      body: form
+    });
+    const json = await res.json();
+
+    if (json.text) {
+      itemEl.classList.add('done');
+      itemEl.querySelector('p').textContent = json.text.slice(0, 100) + (json.text.length > 100 ? '...' : '');
+      itemEl.querySelector('.status-badge').textContent = 'Done';
+
+      // Also update the main editor if it's currently empty
+      if (!textEl.value.trim()) {
+        textEl.value = json.text;
+        if (!titleEl.value.trim()) {
+          const firstLine = json.text.split("\n").map(l => l.trim()).find(Boolean);
+          if (firstLine) titleEl.value = firstLine.slice(0, 80);
+        }
+        enableExportButtons();
+      }
+    }
+  } catch (e) {
+    itemEl.querySelector('p').textContent = "OCR failed";
+    itemEl.querySelector('.status-badge').style.background = 'var(--danger)';
+  }
+}
+
+async function scanLoop() {
+  if (!isScanning || !stream) return;
+
+  try {
+    const now = Date.now();
+    if (now - lastAutoCaptureTime > AUTO_CAPTURE_COOLDOWN) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 224; // YOLOS prefers smaller inputs
+      tempCanvas.height = 224;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+      const cardLabels = ['book', 'laptop', 'tablet', 'paper', 'envelope', 'cell phone', 'remote', 'mouse'];
+      const detections = await detector(img, { threshold: 0.1 });
+
+      if (detections.length > 0) {
+        const top = detections.sort((a, b) => b.score - a.score)[0];
+        console.log("Visible objects:", detections.map(d => `${d.label} (${Math.round(d.score * 100)}%)`));
+
+        // Show what it's seeing to guide the user
+        if (!isScanning) return; // Guard
+
+        const found = detections.some(d => {
+          const isCardLabel = cardLabels.includes(d.label);
+          const isConfident = d.score > 0.45;
+          const { xmin, ymin, xmax, ymax } = d.box;
+          const w = (xmax - xmin) / tempCanvas.width;
+          const h = (ymax - ymin) / tempCanvas.height;
+          const area = w * h;
+
+          return (isCardLabel || isConfident) && area > 0.02;
+        });
+
+        if (found) {
+          const best = detections.find(d => cardLabels.includes(d.label)) || top;
+          setStatus(`Detected ${best.label}! Capturing...`);
+          const { blob, url } = await captureFrame();
+          lastAutoCaptureTime = now;
+          await processAutoCapture(blob, url);
+          setStatus("Auto-scan: Waiting for next card...");
+        } else {
+          setStatus(`Scanning... (seeing ${top.label} ${Math.round(top.score * 100)}%)`);
+        }
+      } else {
+        setStatus("Auto-scan: Hold card to guide");
+      }
+    }
+  } catch (e) {
+    console.error("Scan error:", e);
+  }
+
+  if (isScanning) {
+    setTimeout(scanLoop, 800);
+  }
 }
 
 async function runOcr() {
@@ -171,6 +300,8 @@ stopBtn.addEventListener("click", () => {
   captureBtn.disabled = true;
   stopBtn.disabled = true;
   ocrBtn.disabled = true;
+  autoScanToggle.checked = false;
+  video.parentElement.classList.remove('scanning');
   setStatus("Camera stopped");
 });
 
@@ -192,6 +323,25 @@ ocrBtn.addEventListener("click", async () => {
     setStatus(e.message);
   } finally {
     ocrBtn.disabled = false;
+  }
+});
+
+autoScanToggle.addEventListener('change', async () => {
+  if (autoScanToggle.checked) {
+    if (!stream) {
+      autoScanToggle.checked = false;
+      setStatus("Start camera first");
+      return;
+    }
+    await initDetector();
+    isScanning = true;
+    video.parentElement.classList.add('scanning');
+    setStatus("Auto-scan active");
+    scanLoop();
+  } else {
+    isScanning = false;
+    video.parentElement.classList.remove('scanning');
+    setStatus("Auto-scan disabled");
   }
 });
 
