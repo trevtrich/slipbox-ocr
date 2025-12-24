@@ -79,5 +79,5 @@ app.post('/api/save', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Slipbox OCR (Boston Pattern) running on http://localhost:${PORT}`);
+  console.log(`Slipbox OCR running on http://localhost:${PORT}`);
 });
