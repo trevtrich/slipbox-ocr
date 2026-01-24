@@ -45,7 +45,7 @@ const upload = multer({
 
 app.get('/api/health', (_req, res) => {
   const engines = ['gemini', 'ollama'];
-  res.json({ ok: true, engines, defaultEngine: 'ollama' });
+  res.json({ ok: true, engines, defaultEngine: 'gemini' });
 });
 
 app.post('/api/detect', upload.single('image'), async (req, res) => {
@@ -75,7 +75,7 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
       crop = cropped.crop;
     }
 
-    if (preprocess) {
+    if (preprocess && engine !== 'ollama') {
       working = await enhanceForOcr(working);
     }
 

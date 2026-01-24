@@ -22,7 +22,7 @@ let stream;
 let lastCaptureBlob;
 let isScanning = false;
 let lastDetectTime = 0;
-const DETECT_INTERVAL = 1500; // Check every 1.5s
+const DETECT_INTERVAL = 1500; // Check every 1.5s as per stable version
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -109,7 +109,7 @@ async function scanLoop() {
     setStatus("Ollama: Searching for notecards...");
 
     try {
-      // Capture a very low-quality image for detection
+      // Reverting to 0.3 quality for faster detection processing
       const blob = await captureFrame(0.3);
       const form = new FormData();
       form.append("image", blob, "detect.jpg");
@@ -119,6 +119,7 @@ async function scanLoop() {
         body: form
       });
       const { detected } = await res.json();
+      console.log(`[Frontend] Detected: ${detected}`);
 
       if (detected) {
         setStatus("Ollama: Card detected! Reading...");
@@ -144,7 +145,8 @@ async function performAutoOcr() {
 
     const form = new FormData();
     form.append("image", blob, "capture.jpg");
-    const res = await fetch("/api/ocr?engine=ollama", { method: "POST", body: form });
+    // Switch to gemini for the 'reading' phase as requested
+    const res = await fetch("/api/ocr?engine=gemini", { method: "POST", body: form });
     const json = await res.json();
 
     if (!res.ok) throw new Error(json.error);
@@ -191,16 +193,20 @@ function addToHistory(blob, text) {
 
 async function runOcr() {
   if (!lastCaptureBlob) throw new Error("Capture an image first");
-  setStatus("Ollama: Reading...");
+
+  const engine = engineEl.value;
+  setStatus(`Processing with ${engine}...`);
 
   const form = new FormData();
   form.append("image", lastCaptureBlob, "manual.jpg");
-  const res = await fetch("/api/ocr?engine=ollama", { method: "POST", body: form });
+  const res = await fetch(`/api/ocr?engine=${engine}`, { method: "POST", body: form });
   const json = await res.json();
+
+  if (!res.ok) throw new Error(json.error);
 
   textEl.value = json.text || "";
   enableExportButtons();
-  setStatus(`Ollama: Done (${json.durationMs}ms)`);
+  setStatus(`Done (${json.durationMs}ms)`);
 }
 
 // Event Listeners
@@ -274,3 +280,15 @@ saveBtn.addEventListener("click", async () => {
 
 textEl.addEventListener("input", enableExportButtons);
 titleEl.addEventListener("input", buildMarkdown);
+
+(async () => {
+  try {
+    const res = await fetch("/api/health");
+    const json = await res.json();
+    if (json?.defaultEngine && engineEl) {
+      engineEl.value = json.defaultEngine;
+    }
+  } catch {
+    // ignore
+  }
+})();

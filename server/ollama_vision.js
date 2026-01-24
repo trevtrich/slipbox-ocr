@@ -29,22 +29,28 @@ async function ollamaRequest(model, prompt, imageBuffer) {
 }
 
 async function detectNotecard(imageBuffer) {
-  // We use a very fast small model for detection
-  const prompt = "Is there a 3x5 handwritten notecard clearly visible in this image? Answer only with 'Yes' or 'No'.";
+  // Use a prompt that Moondream likes to talk about
+  const prompt = "Is there a handwritten note or white card in the image?";
   const response = await ollamaRequest('moondream', prompt, imageBuffer);
-  return response.toLowerCase().includes('yes');
+  const text = response.toLowerCase();
+  console.log(`[Detection Check] Moondream: "${text}"`);
+
+  // Keywords that indicate a card is found
+  return text.includes('yes') || text.match(/card|paper|note|writing|holding|piece|message|white/);
 }
 
 async function readNotecard(imageBuffer) {
-  // We can use moondream or a slightly better one depending on performance
-  const prompt = "Transcribe the handwritten text on this notecard exactly. Only output the transcribed text.";
-  const response = await ollamaRequest('moondream', prompt, imageBuffer);
+  // Use a more forceful prompt for Llama 3.2
+  const prompt = "Please read the two handwritten words on this white card carefully. Transcribe them exactly as they are written. Output only the text.";
+  const response = await ollamaRequest('llama3.2-vision:11b', prompt, imageBuffer);
 
-  // Simple duration tracking for consistency with previous API
+  // Less aggressive cleaning to avoid losing valid text
+  const cleanedText = response.replace(/\*\*.*?\*\*|Transcription:|Output:|^"|"$/gi, '').trim();
+
   return {
-    text: response,
+    text: cleanedText,
     confidence: null,
-    durationMs: 0 // Placeholder, we can track this at the server level
+    durationMs: 0
   };
 }
 
