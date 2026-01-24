@@ -4,12 +4,35 @@ const multer = require('multer');
 const path = require('path');
 
 const { recognizeWithGemini } = require('./gemini_vision');
+const { detectNotecard, readNotecard } = require('./ollama_vision');
 const { ensureOutputDir, saveMarkdown } = require('./storage');
 const { autoCropNotecard, enhanceForOcr } = require('./preprocess');
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 const app = express();
+
+// LiveReload logic for a better DX
+if (process.env.NODE_ENV !== 'production') {
+  const livereload = require("livereload");
+  const connectLiveReload = require("connect-livereload");
+
+  const liveReloadServer = livereload.createServer({
+    exts: ['js', 'css', 'html'],
+    extraWatchDirs: [path.join(__dirname, '..', 'public')]
+  });
+  liveReloadServer.watch(path.join(__dirname, '..', 'public'));
+
+  app.use(connectLiveReload());
+
+  // Refresh browser 100ms after server restart
+  liveReloadServer.server.once("connection", () => {
+    setTimeout(() => {
+      liveReloadServer.refresh("/");
+    }, 100);
+  });
+}
+
 app.use(express.json({ limit: '2mb' }));
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -21,8 +44,18 @@ const upload = multer({
 });
 
 app.get('/api/health', (_req, res) => {
-  const engines = ['gemini'];
-  res.json({ ok: true, engines, defaultEngine: 'gemini' });
+  const engines = ['gemini', 'ollama'];
+  res.json({ ok: true, engines, defaultEngine: 'ollama' });
+});
+
+app.post('/api/detect', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file?.buffer) return res.status(400).json({ error: 'Missing image' });
+    const detected = await detectNotecard(req.file.buffer);
+    res.json({ detected });
+  } catch (err) {
+    res.status(500).json({ error: err?.message ?? 'Detection failed' });
+  }
 });
 
 app.post('/api/ocr', upload.single('image'), async (req, res) => {
@@ -51,6 +84,19 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
       return res.json({
         ...result,
         engine: 'gemini',
+        crop,
+        applied: { preprocess, autocrop }
+      });
+    }
+
+    if (engine === 'ollama') {
+      const start = Date.now();
+      const result = await readNotecard(working);
+      const durationMs = Date.now() - start;
+      return res.json({
+        ...result,
+        engine: 'ollama',
+        durationMs,
         crop,
         applied: { preprocess, autocrop }
       });

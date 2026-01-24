@@ -12,15 +12,16 @@
     <main class="container">
         <header class="header">
             <h1>Slipbox OCR</h1>
-            <p>Advanced Handwriting Recognition via Gemini 3 Flash.</p>
+            <p>Local Handwriting Recognition via Ollama.</p>
         </header>
 
         <section class="grid">
             <div class="panel">
                 <h2>Camera</h2>
-                <div class="videoWrap">
+                <div class="videoWrap" id="videoWrap">
                     <video id="video" autoplay playsinline></video>
                     <div class="guide" aria-hidden="true"></div>
+                    <div id="liveText" class="live-text"></div>
                     <canvas id="canvas" class="hidden"></canvas>
                 </div>
                 <div class="row">
@@ -30,14 +31,15 @@
                     <label class="toggle">
                         <input type="checkbox" id="autoScanToggle">
                         <span class="slider"></span>
-                        Auto-scan
+                        Auto-detect
                     </label>
                 </div>
                 <div class="row">
                     <label class="label">
                         Engine
                         <select id="engine">
-                            <option value="gemini" selected>Gemini 3 Flash (Handwriting)</option>
+                            <option value="ollama" selected>Ollama (Local Moondream)</option>
+                            <option value="gemini">Gemini 3 Flash (Cloud)</option>
                         </select>
                     </label>
                     <label class="label">
