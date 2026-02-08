@@ -106,7 +106,7 @@ async function scanLoop() {
   const now = Date.now();
   if (now - lastDetectTime > DETECT_INTERVAL) {
     lastDetectTime = now;
-    setStatus("Ollama: Searching for notecards...");
+    setStatus("CV: Searching for notecards...");
 
     try {
       // Reverting to 0.3 quality for faster detection processing
@@ -118,11 +118,11 @@ async function scanLoop() {
         method: "POST",
         body: form
       });
-      const { detected } = await res.json();
-      console.log(`[Frontend] Detected: ${detected}`);
+      const { detected, durationMs } = await res.json();
+      console.log(`[Frontend] Detected: ${detected} (${durationMs}ms)`);
 
       if (detected) {
-        setStatus("Ollama: Card detected! Reading...");
+        setStatus("CV: Card detected! Reading...");
         await performAutoOcr();
       }
     } catch (e) {
@@ -155,7 +155,7 @@ async function performAutoOcr() {
     const firstLine = (json.text || "").split("\n").map(l => l.trim()).find(Boolean);
     if (firstLine) titleEl.value = firstLine.slice(0, 80);
 
-    setStatus(`Ollama: Done (${json.durationMs}ms)`);
+    setStatus(`Gemini: Done (${json.durationMs}ms)`);
     enableExportButtons();
     addToHistory(blob, json.text);
 

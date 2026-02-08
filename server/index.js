@@ -5,6 +5,7 @@ const path = require('path');
 
 const { recognizeWithGemini } = require('./gemini_vision');
 const { detectNotecard, readNotecard } = require('./ollama_vision');
+const { detectNotecardRectangle } = require('./rectangle_detector');
 const { ensureOutputDir, saveMarkdown } = require('./storage');
 const { autoCropNotecard, enhanceForOcr } = require('./preprocess');
 
@@ -51,9 +52,16 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/detect', upload.single('image'), async (req, res) => {
   try {
     if (!req.file?.buffer) return res.status(400).json({ error: 'Missing image' });
-    const detected = await detectNotecard(req.file.buffer);
-    res.json({ detected });
+
+    const startTime = Date.now();
+    const detected = await detectNotecardRectangle(req.file.buffer);
+    const durationMs = Date.now() - startTime;
+
+    console.log(`[CV Detection] Result: ${detected}, took ${durationMs}ms`);
+
+    res.json({ detected, durationMs });
   } catch (err) {
+    console.error('[CV Detection] Error:', err);
     res.status(500).json({ error: err?.message ?? 'Detection failed' });
   }
 });
