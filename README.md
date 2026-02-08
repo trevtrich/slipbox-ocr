@@ -112,8 +112,6 @@ slipbox-ocr/
 │   ├── index.js        # Express server
 │   ├── rectangle_detector.js  # CV detection
 │   ├── gemini_vision.js       # Google Gemini OCR
-│   ├── ollama_vision.js       # Local Ollama OCR
-│   ├── preprocess.js          # Image preprocessing
 │   └── storage.js             # File saving
 ├── output/             # Saved Markdown files
 ├── test_images/        # Test cases for detection
