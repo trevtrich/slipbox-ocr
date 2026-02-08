@@ -194,12 +194,11 @@ function addToHistory(blob, text) {
 async function runOcr() {
   if (!lastCaptureBlob) throw new Error("Capture an image first");
 
-  const engine = engineEl.value;
-  setStatus(`Processing with ${engine}...`);
+  setStatus('Processing with Gemini...');
 
   const form = new FormData();
   form.append("image", lastCaptureBlob, "manual.jpg");
-  const res = await fetch(`/api/ocr?engine=${engine}`, { method: "POST", body: form });
+  const res = await fetch('/api/ocr', { method: "POST", body: form });
   const json = await res.json();
 
   if (!res.ok) throw new Error(json.error);
@@ -281,14 +280,4 @@ saveBtn.addEventListener("click", async () => {
 textEl.addEventListener("input", enableExportButtons);
 titleEl.addEventListener("input", buildMarkdown);
 
-(async () => {
-  try {
-    const res = await fetch("/api/health");
-    const json = await res.json();
-    if (json?.defaultEngine && engineEl) {
-      engineEl.value = json.defaultEngine;
-    }
-  } catch {
-    // ignore
-  }
-})();
+

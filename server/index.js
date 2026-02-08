@@ -4,10 +4,8 @@ const multer = require('multer');
 const path = require('path');
 
 const { recognizeWithGemini } = require('./gemini_vision');
-const { detectNotecard, readNotecard } = require('./ollama_vision');
 const { detectNotecardRectangle } = require('./rectangle_detector');
 const { ensureOutputDir, saveMarkdown } = require('./storage');
-const { autoCropNotecard, enhanceForOcr } = require('./preprocess');
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
@@ -45,8 +43,7 @@ const upload = multer({
 });
 
 app.get('/api/health', (_req, res) => {
-  const engines = ['gemini', 'ollama'];
-  res.json({ ok: true, engines, defaultEngine: 'gemini' });
+  res.json({ ok: true, engine: 'gemini' });
 });
 
 app.post('/api/detect', upload.single('image'), async (req, res) => {
@@ -70,47 +67,11 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
   try {
     if (!req.file?.buffer) return res.status(400).json({ error: 'Missing image' });
 
-    const engine = String(req.query.engine || 'gemini').toLowerCase();
-    const preprocess = req.query.preprocess !== '0';
-    const autocrop = req.query.autocrop === '1';
-
-    let working = req.file.buffer;
-    let crop = null;
-
-    if (autocrop) {
-      const cropped = await autoCropNotecard(working);
-      working = cropped.buffer;
-      crop = cropped.crop;
-    }
-
-    if (preprocess && engine !== 'ollama') {
-      working = await enhanceForOcr(working);
-    }
-
-    if (engine === 'gemini') {
-      const result = await recognizeWithGemini(working, req.file.mimetype);
-      return res.json({
-        ...result,
-        engine: 'gemini',
-        crop,
-        applied: { preprocess, autocrop }
-      });
-    }
-
-    if (engine === 'ollama') {
-      const start = Date.now();
-      const result = await readNotecard(working);
-      const durationMs = Date.now() - start;
-      return res.json({
-        ...result,
-        engine: 'ollama',
-        durationMs,
-        crop,
-        applied: { preprocess, autocrop }
-      });
-    }
-
-    throw new Error('Unsupported engine: ' + engine);
+    const result = await recognizeWithGemini(req.file.buffer, req.file.mimetype);
+    return res.json({
+      ...result,
+      engine: 'gemini'
+    });
   } catch (err) {
     console.error('OCR Error:', err);
     res.status(500).json({ error: err?.message ?? 'OCR failed' });

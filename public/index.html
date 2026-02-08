@@ -12,7 +12,7 @@
     <main class="container">
         <header class="header">
             <h1>Slipbox OCR</h1>
-            <p>Hybrid Mode: CV Detection (Rectangle) + Cloud OCR (Gemini).</p>
+            <p>Auto-detecting notecard OCR with computer vision + Gemini AI.</p>
         </header>
 
         <section class="grid">
@@ -35,13 +35,6 @@
                     </label>
                 </div>
                 <div class="row">
-                    <label class="label">
-                        Engine
-                        <select id="engine">
-                            <option value="ollama" selected>Ollama (Local Moondream)</option>
-                            <option value="gemini">Gemini 3 Flash (Cloud)</option>
-                        </select>
-                    </label>
                     <label class="label">
                         JPEG quality
                         <input id="quality" type="range" min="40" max="95" value="85" />

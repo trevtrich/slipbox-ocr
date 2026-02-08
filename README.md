@@ -1,15 +1,28 @@
 # Slipbox OCR
 
-Auto-detecting notecard OCR system with computer vision detection and cloud-based text recognition.
+Auto-detecting notecard OCR system with computer vision detection and Google Gemini AI for text recognition.
 
 ## Features
 
 - **Auto-Detection**: Automatically detects when a notecard is in view (no manual capture needed)
-- **Fast CV Detection**: 9-14ms detection using brightness-based computer vision (100x faster than LLM)
+- **Fast CV Detection**: 7-14ms detection using brightness-based computer vision
 - **High Accuracy**: 100% detection accuracy - recognizes notecards, ignores faces/people
-- **Cloud OCR**: Uses Google Gemini for high-quality handwriting recognition
+- **Gemini AI OCR**: Uses Google Gemini for high-quality handwriting recognition
 - **Auto-Save**: Saves recognized text as Markdown files
 - **Live Preview**: Real-time camera feed with capture history
+
+## Tech Stack
+
+**Core Dependencies:**
+- `express` - Web server
+- `sharp` - Image processing for detection
+- `@google/generative-ai` - Gemini API client
+- `multer` - File upload handling
+- `dotenv` - Environment variables
+
+**Dev Dependencies:**
+- `nodemon` - Auto-reload during development
+- `livereload` - Browser auto-refresh
 
 ## How It Works
 
@@ -35,9 +48,8 @@ This approach:
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
 - Google Gemini API key ([get one here](https://aistudio.google.com/app/apikey))
-- (Optional) Ollama for local OCR
 
 ### Installation
 
@@ -123,12 +135,6 @@ const hasContrast = contrastRatio > 1.00;     // Contrast threshold
 
 Lower thresholds = more sensitive (may detect non-cards)  
 Higher thresholds = less sensitive (may miss cards)
-
-### OCR Engines
-
-Toggle between engines in the UI:
-- **Gemini**: Cloud-based, high accuracy, requires API key
-- **Ollama**: Local (if installed), no API key needed
 
 ## Development
 
