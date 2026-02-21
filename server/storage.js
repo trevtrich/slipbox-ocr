@@ -1,7 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 
-const OUTPUT_DIR = '/Users/trevorr/Library/CloudStorage/GoogleDrive-richardson.trev@gmail.com/My Drive/Trevor/Second Brain/Second Brain/Notion/Slipbox/Cards';
+const OUTPUT_DIR = process.env.OBSIDIAN_DIR || path.join(__dirname, '..', 'output');
 const QUEUE_DIR = path.join(__dirname, '..', 'uploads', 'queue');
 const PROCESSED_DIR = path.join(__dirname, '..', 'uploads', 'processed');
 

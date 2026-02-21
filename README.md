@@ -26,10 +26,23 @@ Auto-detecting notecard OCR system with computer vision detection and Google Gem
 
 ## How It Works
 
-1. **Detection**: Analyzes video frames for bright, uniform rectangular objects (notecards)
-2. **Capture**: When notecard detected, captures high-quality image
-3. **OCR**: Sends to Google Gemini for text extraction
-4. **Save**: Outputs as timestamped Markdown files
+```mermaid
+graph TD
+    A[Camera Feed] --> B{Auto-Detect Notecard?}
+    B -- Yes --> C[Capture Image Blob]
+    A -- Manual Click --> C
+    C --> D[Image Queue]
+    D -- Process Queue --> E[Background OCR Worker (Gemini 2.5 Flash)]
+    E --> F[Processed Drafts Cache]
+    F --> G[Review & Edit in UI]
+    G --> H[Batch Save to Obsidian Vault]
+```
+
+1. **Capture**: When notecard detected by CV (or manually captured), it captures a high-quality image.
+2. **Queue**: Images sit in a local disk queue `uploads/queue` so you don't lose scans if the browser crashes.
+3. **Background Processing**: Sends queued images to Gemini 2.5 Flash for async text extraction.
+4. **Review**: Caches extracted text into `uploads/processed` so you can manually edit/review them safely.
+5. **Save**: Outputs as timestamped Markdown files with Frontmatter directly into your Obsidian Vault or output directory.
 
 ### Detection Algorithm
 
@@ -69,9 +82,10 @@ npm install
 cp .env.example .env
 ```
 
-4. Add your Gemini API key to `.env`:
+4. Add your Gemini API key and Obsidian vault path to `.env`:
 ```
 GEMINI_API_KEY=your_actual_api_key_here
+OBSIDIAN_DIR=/path/to/your/Obsidian/Slipbox/Cards
 ```
 
 ### Running
@@ -86,10 +100,11 @@ Open http://localhost:3000 in your browser.
 ## Usage
 
 1. **Start Camera**: Click "Start camera" button
-2. **Enable Auto-Detect**: Toggle "Auto-detect" switch
-3. **Hold Up Notecard**: System will automatically detect and capture
-4. **View Results**: OCR text appears in the result panel
-5. **Export**: Download as Markdown or save to `output/` folder
+2. **Enable Auto-Detect**: Toggle "Auto-detect" switch or manually use the "Capture" button.
+3. **Hold Up Notecard**: System will automatically detect and capture adding it to the Image Queue.
+4. **Process Background OCR**: Click "Process Queue" to let Gemini extract the markdown text safely behind the scenes.
+5. **Review Results**: OCR text and thumbnails appear in the Drafts queue so you can review them. 
+6. **Export**: Batch push all drafts directly to your Obsidian Vault with standard Zettelkasten parameters!
 
 ## Testing
 
