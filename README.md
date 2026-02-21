@@ -28,20 +28,30 @@ Auto-detecting notecard OCR system with computer vision detection and Google Gem
 
 ```mermaid
 graph TD
-    A[Camera Feed] --> B{Auto-Detect Notecard?}
-    B -- Yes --> C[Capture Image Blob]
-    A -- User Clicks 'Capture' --> C
+    subgraph Client [Frontend Browser]
+        A[Camera Feed] --> B{Auto-Detect Notecard?}
+        B -- Yes --> C[Capture Image Blob]
+        A -- User Clicks 'Capture' --> C
+        G[Review & Edit in UI]
+    end
+
+    subgraph Server [Node.js Backend]
+        D[(Server Disk: uploads/queue/)]
+        E[OCR Worker - Gemini 2.5 Flash]
+        F[(Server Disk: uploads/processed/)]
+        H[(Server Disk: Obsidian Vault *.md)]
+    end
+
+    C -- Upload JPG via API --> D
     
-    C -- Save JPG --> D[(Disk: uploads/queue/)]
+    D -- User Clicks 'Process Queue' --> E
     
-    D -- User Clicks 'Process Queue' --> E[OCR Worker - Gemini 2.5 Flash]
+    E -- Move JPG & Save JSON --> F
     
-    E -- Move JPG & Save JSON --> F[(Disk: uploads/processed/)]
+    F -- API Auto-Load --> G
+    G -- User API Update/Delete --> F
     
-    F -- Auto-Load --> G[Review & Edit in UI]
-    G -- User Edits / Discards --> F
-    
-    G -- User Clicks 'Save All' --> H[(Obsidian Vault: *.md)]
+    G -- User Clicks 'Save All' --> H
 ```
 
 1. **Capture**: When notecard detected by CV (or manually captured), it captures a high-quality image.
