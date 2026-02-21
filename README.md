@@ -30,12 +30,12 @@ Auto-detecting notecard OCR system with computer vision detection and Google Gem
 graph TD
     A[Camera Feed] --> B{Auto-Detect Notecard?}
     B -- Yes --> C[Capture Image Blob]
-    A -- Manual Click --> C
+    A -- User Clicks 'Capture' --> C
     C --> D[Image Queue]
-    D -- Process Queue --> E[Background OCR Worker - Gemini 2.5 Flash]
+    D -- User Clicks 'Process Queue' --> E[Background OCR Worker - Gemini 2.5 Flash]
     E --> F[Processed Drafts Cache]
-    F --> G[Review & Edit in UI]
-    G --> H[Batch Save to Obsidian Vault]
+    F -- User Edits/Discards --> G[Review & Edit in UI]
+    G -- User Clicks 'Save All' --> H[Batch Save to Obsidian Vault]
 ```
 
 1. **Capture**: When notecard detected by CV (or manually captured), it captures a high-quality image.
