@@ -32,7 +32,8 @@ graph TD
         A[Camera Feed] --> B{Auto-Detect Notecard?}
         B -- Yes --> C[Capture Image Blob]
         A -- User Clicks 'Capture' --> C
-        G[Review & Edit in UI]
+        I[Image Queue UI]
+        G[Review & Edit UI]
     end
 
     subgraph Server [Node.js Backend]
@@ -43,8 +44,10 @@ graph TD
     end
 
     C -- Upload JPG via API --> D
+    D -- Render Thumbnails --> I
     
-    D -- User Clicks 'Process Queue' --> E
+    I -- User Clicks 'Process Queue' API Call --> E
+    D -. Images Consumed By .-> E
     
     E -- Move JPG & Save JSON --> F
     
