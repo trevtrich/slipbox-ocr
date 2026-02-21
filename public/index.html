@@ -45,29 +45,38 @@
             </div>
 
             <div class="panel">
-                <h2>Result</h2>
-                <label class="label">
-                    Title
-                    <input id="title" type="text" placeholder="Optional (defaults to first line)" />
-                </label>
-                <label class="label">
-                    Text (edit before exporting)
-                    <textarea id="text" rows="12" placeholder="OCR output appears here..."></textarea>
-                </label>
+                <h2>Queue & Settings</h2>
                 <div class="row">
-                    <button id="ocrBtn" class="primary-btn" disabled>Run OCR</button>
-                    <button id="copyBtn" disabled>Copy text</button>
+                    <label class="label" style="flex:1">
+                        Default Card Type
+                        <select id="cardType" style="width: 100%; margin-top: 0.25rem;">
+                            <option value="Fleeting" selected>Fleeting</option>
+                            <option value="Source">Source</option>
+                            <option value="Permanent">Permanent</option>
+                        </select>
+                    </label>
+                    <label class="label" style="flex:2">
+                        Grouping / Topic (Links to)
+                        <input id="cardTopic" type="text" placeholder="e.g. How to Take Smart Notes"
+                            style="width: 100%; margin-top: 0.25rem;" />
+                    </label>
                 </div>
-                <div class="row">
-                    <button id="downloadBtn" disabled>Download .md</button>
-                    <button id="saveBtn" disabled>Save to output/</button>
-                </div>
-                <details class="details">
-                    <summary>Markdown preview</summary>
-                    <pre id="mdPreview" class="md"></pre>
-                </details>
 
-                <div id="capturesList" class="captures-list">
+                <h2 style="margin-top: 2rem;">1. Image Queue</h2>
+                <div class="row" style="margin-top: 1rem; flex-wrap: wrap; gap: 0.5rem;" id="imageQueueList">
+                    <!-- Thumbnails go here -->
+                </div>
+                <div class="row" style="margin-top: 1rem;">
+                    <button id="processAllBtn" class="primary-btn" disabled>Process Queue (0)</button>
+                </div>
+
+                <div
+                    style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <h2 style="margin: 0;">2. Processed Cards</h2>
+                    <button id="uploadAllBtn" class="primary-btn" disabled style="padding: 0.6rem 1.2rem;">Save All to
+                        Obsidian (0)</button>
+                </div>
+                <div id="capturesList" class="captures-list batch-list">
                     <!-- Dynamic capture items will appear here -->
                 </div>
             </div>

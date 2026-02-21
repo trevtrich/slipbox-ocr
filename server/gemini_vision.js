@@ -6,14 +6,16 @@ async function recognizeWithGemini(imageBuffer, mimeType = 'image/png') {
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-  const prompt = `Transcribe the handwritten text on this 3x5 notecard for a Markdown file. 
-Join lines that were broken only because of the physical edge of the card. 
-The output should consist of continuous paragraphs.
+  const prompt = `Transcribe the handwritten text on this 3x5 notecard. 
+Also, generate a short, punchy, one-sentence idea summary to use as a filename.
+Return ONLY a valid JSON object with two keys: "title" and "text".
+Do NOT format it as code blocks with \`\`\`json. Return raw JSON.
+The text should consist of continuous paragraphs.
 Use a double newline only when there is a clear, intentional paragraph break or a list in the handwriting.
-Do not use single newlines for line wraps.
-Only output the transcribed text.`;
+Do not use single newlines for line wraps.`;
+
   const imagePart = {
     inlineData: {
       data: imageBuffer.toString('base64'),
@@ -24,12 +26,24 @@ Only output the transcribed text.`;
   const startedAt = Date.now();
   const result = await model.generateContent([prompt, imagePart]);
   const response = await result.response;
-  const text = response.text();
+
+  // Parse response as JSON
+  const rawText = response.text().trim();
+  let jsonResult = { title: "Untitled Idea", text: rawText };
+  try {
+    const jsonStr = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
+    jsonResult = JSON.parse(jsonStr);
+  } catch (e) {
+    console.error("Failed to parse Gemini JSON:", e);
+    // fallback: try to extract something that looks like JSON or just use raw text
+  }
+
   const durationMs = Date.now() - startedAt;
 
   return {
-    text: text.trim(),
-    confidence: null, // Gemini doesn't return a simple confidence score usually
+    title: jsonResult.title,
+    text: jsonResult.text,
+    confidence: null,
     durationMs
   };
 }

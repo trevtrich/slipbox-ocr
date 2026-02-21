@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "nodemon --ignore output/ --ignore scripts/ server/index.js",
+    "dev": "nodemon --ignore output/ --ignore scripts/ --ignore uploads/ --ignore public/ server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
