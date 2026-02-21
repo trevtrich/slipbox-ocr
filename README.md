@@ -32,7 +32,7 @@ graph TD
     B -- Yes --> C[Capture Image Blob]
     A -- Manual Click --> C
     C --> D[Image Queue]
-    D -- Process Queue --> E[Background OCR Worker (Gemini 2.5 Flash)]
+    D -- Process Queue --> E[Background OCR Worker - Gemini 2.5 Flash]
     E --> F[Processed Drafts Cache]
     F --> G[Review & Edit in UI]
     G --> H[Batch Save to Obsidian Vault]
