@@ -31,11 +31,17 @@ graph TD
     A[Camera Feed] --> B{Auto-Detect Notecard?}
     B -- Yes --> C[Capture Image Blob]
     A -- User Clicks 'Capture' --> C
-    C --> D[Image Queue]
-    D -- User Clicks 'Process Queue' --> E[Background OCR Worker - Gemini 2.5 Flash]
-    E --> F[Processed Drafts Cache]
-    F -- User Edits/Discards --> G[Review & Edit in UI]
-    G -- User Clicks 'Save All' --> H[Batch Save to Obsidian Vault]
+    
+    C -- Save JPG --> D[(Disk: uploads/queue/)]
+    
+    D -- User Clicks 'Process Queue' --> E[OCR Worker - Gemini 2.5 Flash]
+    
+    E -- Move JPG & Save JSON --> F[(Disk: uploads/processed/)]
+    
+    F -- Auto-Load --> G[Review & Edit in UI]
+    G -- User Edits / Discards --> F
+    
+    G -- User Clicks 'Save All' --> H[(Obsidian Vault: *.md)]
 ```
 
 1. **Capture**: When notecard detected by CV (or manually captured), it captures a high-quality image.
